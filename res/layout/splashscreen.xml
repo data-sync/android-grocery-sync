@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" android:gravity="center_horizontal"
+        android:background="@color/CouchbaseRedGradientStart">
+    <ImageView android:src="@drawable/splash" android:id="@+id/splashImageView" android:layout_alignParentTop="true"
+               android:layout_alignParentLeft="true" android:layout_height="fill_parent"
+               android:layout_width="fill_parent" android:scaleType="centerCrop" android:paddingBottom="50dp"
+               android:layout_above="@+id/splashProgressBar" android:contentDescription="splash"/>
+    <ProgressBar android:layout_width="wrap_content" android:id="@+id/splashProgressBar"
+                 android:layout_height="wrap_content" android:layout_alignParentBottom="true"
+                 android:layout_centerHorizontal="true" android:indeterminate="true"
+                 style="@android:style/Widget.ProgressBar.Small" android:layout_toRightOf="@+id/splashProgressMessage"
+                 android:layout_marginLeft="20dp" android:layout_marginBottom="5dp"
+                 android:layout_marginTop="5dp" />
+    <TextView android:id="@+id/splashProgressMessage" android:layout_height="wrap_content"
+              android:text="@string/startup_message" android:layout_below="@+id/splashImageView"
+              android:gravity="center_vertical|center_horizontal" android:textColor="@android:color/white"
+              android:layout_alignParentBottom="true" android:layout_width="wrap_content"
+              android:layout_centerHorizontal="true" />
+
+</RelativeLayout>
