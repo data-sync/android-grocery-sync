@@ -12,9 +12,14 @@ import android.widget.*;
 import com.android.data.DataListAdapter;
 import com.android.data.DataStore;
 import com.android.data.Repository;
-import com.android.data.services.DataService;
+import com.android.data.DataService;
 import org.apache.commons.lang3.StringUtils;
 import org.ektorp.ViewQuery;
+
+import java.util.HashSet;
+
+import static com.android.data.DataService.GROUPS;
+import static com.ownmydata.grocerysync.Item.USERS;
 
 public class AndroidGrocerySyncActivity extends Activity {
     public static final String TAG = "GrocerySync";
@@ -38,7 +43,11 @@ public class AndroidGrocerySyncActivity extends Activity {
     }
 
     private void setup() {
-        boolean isServiceBound = getApplicationContext().bindService(new Intent(this, DataService.class), new ServiceConnection() {
+        Intent intent = new Intent(this, DataService.class);
+        HashSet<String> myGroups = new HashSet<String>();
+        myGroups.add(USERS);
+        intent.putExtra(GROUPS, myGroups);
+        bindService(intent, new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder binder) {
                 DataService service = ((DataService.DataServiceBinder) binder).getService();
@@ -50,7 +59,6 @@ public class AndroidGrocerySyncActivity extends Activity {
                 Log.d(TAG, "Service Disconnected");
             }
         }, Context.BIND_AUTO_CREATE);
-        Log.d(TAG, "Service bound:" + isServiceBound);
     }
 
     private void onConnection(DataStore dataStore) {
@@ -72,7 +80,6 @@ public class AndroidGrocerySyncActivity extends Activity {
         itemListView.setOnItemClickListener(clickListener(repository));
         itemListView.setOnItemLongClickListener(longClickListener(repository));
         addItemEditText.setOnKeyListener(keyListener(repository));
-//        startReplications();
     }
 
     private View.OnKeyListener keyListener(final Repository<Item> repository) {

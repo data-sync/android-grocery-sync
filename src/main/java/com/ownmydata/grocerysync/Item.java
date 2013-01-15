@@ -7,6 +7,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import java.util.Date;
 
 public class Item extends Document {
+    public static final String USERS = "users";
     private Date createdAt;
     private String text;
     private boolean checked;
@@ -22,6 +23,7 @@ public class Item extends Document {
 
     public Item(String text, boolean checked) {
         this(text, checked, new Date());
+        shareWith(USERS);
     }
 
     public Date getCreatedAt() {
