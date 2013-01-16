@@ -19,11 +19,11 @@ public class Item extends Document {
         this.createdAt = createdAt;
         this.text = text;
         this.checked = checked;
+        shareWith(USERS);
     }
 
     public Item(String text, boolean checked) {
         this(text, checked, new Date());
-        shareWith(USERS);
     }
 
     public Date getCreatedAt() {

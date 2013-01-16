@@ -2,23 +2,25 @@ package com.ownmydata.grocerysync;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.*;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.*;
-import com.android.data.DataListAdapter;
-import com.android.data.DataStore;
-import com.android.data.Repository;
-import com.android.data.DataService;
+import com.android.data.*;
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.ektorp.ViewQuery;
 
-import java.util.HashSet;
+import java.io.Serializable;
+import java.util.Map;
 
 import static com.android.data.DataService.GROUPS;
+import static com.android.data.DataService.REMOTE_DB;
+import static com.google.common.collect.Sets.newHashSet;
 import static com.ownmydata.grocerysync.Item.USERS;
 
 public class AndroidGrocerySyncActivity extends Activity {
@@ -29,6 +31,7 @@ public class AndroidGrocerySyncActivity extends Activity {
     //main screen
     protected EditText addItemEditText;
     protected ListView itemListView;
+    private DataServiceConnection serviceConnection;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,40 +46,32 @@ public class AndroidGrocerySyncActivity extends Activity {
     }
 
     private void setup() {
-        Intent intent = new Intent(this, DataService.class);
-        HashSet<String> myGroups = new HashSet<String>();
-        myGroups.add(USERS);
-        intent.putExtra(GROUPS, myGroups);
-        bindService(intent, new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder binder) {
-                DataService service = ((DataService.DataServiceBinder) binder).getService();
-                onConnection(service.getDataStore());
-            }
+        super.onResume();
+        Intent intent = intentWithExtras(DataService.class, intentExtrasBuilder()
+                .put(GROUPS, newHashSet(USERS))
+                .put(REMOTE_DB, "http://10.0.2.2:5984/data-test")
+                .build());
 
+        serviceConnection = new DataServiceConnection() {
             @Override
-            public void onServiceDisconnected(ComponentName name) {
-                Log.d(TAG, "Service Disconnected");
+            protected void onDataConnection(DataStore dataStore) {
+                onConnection(dataStore);
             }
-        }, Context.BIND_AUTO_CREATE);
+        };
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        unbindService(serviceConnection);
+        super.onPause();
     }
 
     private void onConnection(DataStore dataStore) {
         removeSplashScreen();
-        Repository<Item> repository = new Repository<Item>(Item.class, dataStore);
-        repository.defineViewBy("createdAt");
+        ItemRepository repository = new ItemRepository(dataStore);
         ViewQuery viewQuery = repository.buildViewQuery("byCreatedAt").descending(true);
-        DataListAdapter<Item> itemListViewAdapter = new DataListAdapter<Item>(repository, viewQuery, R.layout.grocery_list_item, true) {
-            @Override
-            public void populateView(View view, Item item) {
-                TextView label = (TextView) view.findViewById(R.id.label);
-                ImageView icon = (ImageView) view.findViewById(R.id.icon);
-
-                label.setText(item.getText());
-                icon.setImageResource(item.isChecked() ? R.drawable.list_area___checkbox___checked : R.drawable.list_area___checkbox___unchecked);
-            }
-        };
-        itemListView.setAdapter(itemListViewAdapter);
+        itemListView.setAdapter(new ItemDataListAdapter(repository, viewQuery));
         itemListView.setOnItemClickListener(clickListener(repository));
         itemListView.setOnItemLongClickListener(longClickListener(repository));
         addItemEditText.setOnKeyListener(keyListener(repository));
@@ -141,15 +136,49 @@ public class AndroidGrocerySyncActivity extends Activity {
         };
     }
 
-    protected void removeSplashScreen() {
+    private void removeSplashScreen() {
         if (splashDialog != null) {
             splashDialog.dismiss();
             splashDialog = null;
         }
     }
 
-    protected void showSplashScreen() {
+    private void showSplashScreen() {
         splashDialog = new SplashScreenDialog(this);
         splashDialog.show();
+    }
+
+    private ImmutableMap.Builder<String, Serializable> intentExtrasBuilder() {
+        return new ImmutableMap.Builder<String, Serializable>();
+    }
+
+    private Intent intentWithExtras(Class<DataService> serviceClass, ImmutableMap<String, Serializable> intentExtras) {
+        Intent intent = new Intent(this, serviceClass);
+        for (Map.Entry<String, Serializable> intentExtra : intentExtras.entrySet()) {
+            intent.putExtra(intentExtra.getKey(), intentExtra.getValue());
+        }
+        return intent;
+    }
+
+    private static class ItemDataListAdapter extends DataListAdapter<Item> {
+        public ItemDataListAdapter(Repository<Item> repository, ViewQuery viewQuery) {
+            super(repository, viewQuery, R.layout.grocery_list_item, true);
+        }
+
+        @Override
+        public void populateView(View view, Item item) {
+            TextView label = (TextView) view.findViewById(R.id.label);
+            ImageView icon = (ImageView) view.findViewById(R.id.icon);
+
+            label.setText(item.getText());
+            icon.setImageResource(item.isChecked() ? R.drawable.list_area___checkbox___checked : R.drawable.list_area___checkbox___unchecked);
+        }
+    }
+
+    private static class ItemRepository extends Repository<Item> {
+        public ItemRepository(DataStore dataStore) {
+            super(Item.class, dataStore);
+            defineViewBy("createdAt");
+        }
     }
 }
