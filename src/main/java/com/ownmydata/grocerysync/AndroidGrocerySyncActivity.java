@@ -166,7 +166,7 @@ public class AndroidGrocerySyncActivity extends Activity {
         }
 
         @Override
-        public void populateView(View view, Item item) {
+        public void populateView(View view, Item item, int position) {
             TextView label = (TextView) view.findViewById(R.id.label);
             ImageView icon = (ImageView) view.findViewById(R.id.icon);
 
