@@ -6,7 +6,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.Date;
 
-public class Item extends Document {
+public class Item extends Document<Item> {
     public static final String USERS = "users";
     private Date createdAt;
     private String text;
@@ -16,6 +16,7 @@ public class Item extends Document {
     public Item(@JsonProperty("text") String text,
                 @JsonProperty("checked") boolean checked,
                 @JsonProperty("createdAt") Date createdAt) {
+        super(Item.class);
         this.createdAt = createdAt;
         this.text = text;
         this.checked = checked;
