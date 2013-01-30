@@ -11,6 +11,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.*;
 import com.android.data.*;
+import com.android.data.notification.NotificationObserver;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.ektorp.ViewQuery;
@@ -69,6 +70,8 @@ public class AndroidGrocerySyncActivity extends Activity {
 
     private void onConnection(DataStore dataStore) {
         removeSplashScreen();
+
+        NotificationObserver.setup(dataStore);
         ItemRepository repository = new ItemRepository(dataStore);
         ViewQuery viewQuery = repository.buildViewQuery("byCreatedAt").descending(true);
         itemListView.setAdapter(new ItemDataListAdapter(repository, viewQuery));
